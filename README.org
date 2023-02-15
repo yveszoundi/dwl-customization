@@ -1,0 +1,44 @@
+#+TITLE: README
+
+This my [[https://github.com/djpohly/dwl/][dwl]] configuration ([[https://dwm.suckless.org/][dwm]] for [[https://wayland.freedesktop.org/][wayland]]).
+
+/Disclaimer/: I do not know/use =C= and I barely know what I'm doing!
+
+* Overview
+
+Every couple of years, I check if "wayland is ready" or more likely whether I'm ready for wayland.
+
+The configuration is usable with a "modest" attempt to implement a [[https://www.nongnu.org/ratpoison/][ratpoison-like]] keybindings (=Control+t= prefix).
+
+* Patches
+
+For the =autostart= patch, I apply changes from [[https://github.com/sevz17/dwl][sevz17/dwl]].
+
+|-----------+-------------------------------------------------+
+| Patch     | Purpose                                         |
+|-----------+-------------------------------------------------+
+| [[https://github.com/djpohly/dwl/wiki/autostart][autostart]] | Run programs on startup                         |
+| [[https://github.com/djpohly/dwl/wiki/keychord][keychord]]  | Implement =ratpoison= like keybindings =custom= |
+|-----------+-------------------------------------------------+
+
+* Keybindings
+
+Key bindings are defined in =config.def.h=.
+
+My initial idea was to leverage [[https://github.com/waycrate/swhkd][swhkd]]:
+- That would require writing a reasonably complete IPC implementation for interacting with =dwl= externally.
+- I don't really like the fact that parts of =swhkd= need to run as root via =pkexec=, in comparison to [[https://github.com/baskerville/sxhkd][sxhkd]]
+
+* How to run it
+
+I'm currently using [[https://git.sr.ht/~raphi/somebar][somebar]] as status bar.
+
+#+begin_src sh
+  dbus-run-session dwl -s somebar
+#+end_src
+
+* Screenshot
+
+A new [[https://www.qemu.org/][QEMU]] VM running Void Linux =x86_64-musl= ([[https://docs.voidlinux.org/installation/guides/fde.html][UEFI with full disk encryption]]).
+
+[[./screenshot.png]]

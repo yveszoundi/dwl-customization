@@ -131,9 +131,15 @@ typedef struct {
 typedef struct {
 	uint32_t mod;
 	xkb_keysym_t keysym;
+} Key;
+
+typedef struct {
+	unsigned int n;
+	const Key keys[5];
 	void (*func)(const Arg *);
 	const Arg arg;
-} Key;
+} Keychord;
+
 
 typedef struct {
 	struct wl_list link;
@@ -226,6 +232,7 @@ static void arrange(Monitor *m);
 static void arrangelayer(Monitor *m, struct wl_list *list,
 		struct wlr_box *usable_area, int exclusive);
 static void arrangelayers(Monitor *m);
+static void autostartexec(void);
 static void axisnotify(struct wl_listener *listener, void *data);
 static void buttonpress(struct wl_listener *listener, void *data);
 static void chvt(const Arg *arg);
@@ -363,6 +370,8 @@ static struct wlr_box sgeom;
 static struct wl_list mons;
 static Monitor *selmon;
 
+unsigned int currentkey = 0;
+
 /* global event handlers */
 static struct wl_listener cursor_axis = {.notify = axisnotify};
 static struct wl_listener cursor_button = {.notify = buttonpress};
@@ -412,6 +421,9 @@ static Atom netatom[NetLast];
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
 struct NumTags { char limitexceeded[LENGTH(tags) > 31 ? -1 : 1]; };
+
+static pid_t *autostart_pids;
+static size_t autostart_len;
 
 /* function implementations */
 void
@@ -548,6 +560,27 @@ arrangelayers(Monitor *m)
 				return;
 			}
 		}
+	}
+}
+
+void
+autostartexec(void) {
+	const char *const *p;
+	size_t i = 0;
+
+	/* count entries */
+	for (p = autostart; *p; autostart_len++, p++)
+		while (*++p);
+
+	autostart_pids = calloc(autostart_len, sizeof(pid_t));
+	for (p = autostart; *p; i++, p++) {
+		if ((autostart_pids[i] = fork()) == 0) {
+			setsid();
+			execvp(*p, (char *const *)p);
+			die("dwl: execvp %s:", *p);
+		}
+		/* skip arguments */
+		while (*++p);
 	}
 }
 
@@ -1372,21 +1405,38 @@ keybinding(uint32_t mods, xkb_keysym_t sym)
 	 * processing.
 	 */
 	int handled = 0;
-	const Key *k;
-	for (k = keys; k < END(keys); k++) {
-		if (CLEANMASK(mods) == CLEANMASK(k->mod) &&
-				sym == k->keysym && k->func) {
-			k->func(&k->arg);
-			handled = 1;
-		}
+	int done = 0;
+	const Keychord *k;
+  
+	for (k = keychords; k < END(keychords); k++) {
+      if (k->n > currentkey) {
+          if (CLEANMASK(mods) == CLEANMASK(k->keys[currentkey].mod) &&
+                          sym == k->keys[currentkey].keysym) {
+              handled = 1;
+
+              if (currentkey == k->n - 1 && k->func) {
+                  k->func(&k->arg);
+                  done = 1;
+              }
+
+              break;
+          }
+      }
 	}
+
+	if (handled) {
+		currentkey = (done == 1) ? 0 : (currentkey + 1);
+	} else {
+		currentkey = 0;
+	}
+
 	return handled;
 }
 
 void
 keypress(struct wl_listener *listener, void *data)
 {
-	int i;
+	int i;	
 	/* This event is raised when a key is pressed or released. */
 	Keyboard *kb = wl_container_of(listener, kb, key);
 	struct wlr_keyboard_key_event *event = data;
@@ -1452,6 +1502,7 @@ keyrepeat(void *data)
 {
 	Keyboard *kb = data;
 	int i;
+
 	if (kb->nsyms && kb->wlr_keyboard->repeat_info.rate > 0) {
 		wl_event_source_timer_update(kb->key_repeat_source,
 				1000 / kb->wlr_keyboard->repeat_info.rate);
@@ -1859,6 +1910,16 @@ printstatus(void)
 void
 quit(const Arg *arg)
 {
+  size_t i;
+
+	/* kill child processes */
+	for (i = 0; i < autostart_len; i++) {
+		if (0 < autostart_pids[i]) {
+			kill(autostart_pids[i], SIGTERM);
+			waitpid(autostart_pids[i], NULL, 0);
+		}
+	}
+
 	wl_display_terminate(dpy);
 }
 
@@ -1943,6 +2004,7 @@ run(char *startup_cmd)
 		die("startup: backend_start");
 
 	/* Now that the socket exists and the backend is started, run the startup command */
+  autostartexec();
 	if (startup_cmd) {
 		int piperw[2];
 		if (pipe(piperw) < 0)
@@ -2764,8 +2826,25 @@ sigchld(int unused)
 	 * XWayland process
 	 */
 	while (!waitid(P_ALL, 0, &in, WEXITED|WNOHANG|WNOWAIT) && in.si_pid
-			&& (!xwayland || in.si_pid != xwayland->server->pid))
+#ifdef XWAYLAND         
+			&& (!xwayland || in.si_pid != xwayland->server->pid)
+#endif
+      ) {
+		pid_t *p, *lim;
 		waitpid(in.si_pid, NULL, 0);
+  	if (in.si_pid == child_pid)
+			child_pid = -1;
+		if (!(p = autostart_pids))
+			continue;
+		lim = &p[autostart_len];
+
+		for (; p < lim; p++) {
+			if (*p == in.si_pid) {
+				*p = -1;
+				break;
+			}
+		}
+	}
 }
 
 void
