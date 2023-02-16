@@ -22,7 +22,7 @@ static const Rule rules[] = {
 	/* examples:
 	{ "Gimp",     NULL,       0,            1,           -1 },
 	*/
-	{ "Firefox",  NULL,       1 << 8,       0,           -1 },
+	{ "Firefox",  NULL,       1 << 1,       0,           -1 },
 };
 
 /* layout(s) */
@@ -114,16 +114,16 @@ static const enum libinput_config_tap_button_map button_map = LIBINPUT_CONFIG_TA
   { 3, {{MODKEY, PREFIXKEY}, {MOD_CONTROL, XKB_KEY_h}, {MOD_NONE, KEY}},      toggletag,  {.ui = 1 << TAG} }
 
 /* commands */
-static const char *termcmd[] = { "alacritty", NULL };
-static const char *menucmd[] = { "bemenu-run", "-l", "10", NULL };
-static const char *poweroffcmd[] = { "alacritty", "-e", "sh", "-c", "doas poweroff", NULL };
+#define RUN(...)   { .v = (const char*[]){ __VA_ARGS__, NULL } }
 
 static const Keychord keychords[] = {
   /* Note that Shift changes certain key codes: c -> C, 2 -> at, etc. */
   /* count key_sequences                                                                    function          argument */
-  { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Return}},                                   spawn,            { .v = menucmd } },
-  { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_c}},                                        spawn,            { .v = termcmd } },
-  { 2, {{MODKEY, PREFIXKEY}, {MODKEY,   XKB_KEY_q}},                                        spawn,            { .v = poweroffcmd } },
+  { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Return}},                                   spawn,            RUN("bemenu-run", "-l", "10") },
+  { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_c}},                                        spawn,            RUN("alacritty") },
+  { 2, {{MODKEY, PREFIXKEY}, {MODKEY,   XKB_KEY_l}},                                        spawn,            RUN("swaylock") },
+  { 3, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Shift_R}, {MOD_SHIFT, XKB_KEY_C}},          spawn,            RUN("rclip-copy") },
+  { 3, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Shift_R}, {MOD_SHIFT, XKB_KEY_V}},          spawn,            RUN("rclip-paste") },  
   { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_n}},                                        focusstack,       {.i = +1} },
   { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_p}},                                        focusstack,       {.i = -1} },
   { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_bracketright}},                             incnmaster,       {.i = +1} },
@@ -137,8 +137,8 @@ static const Keychord keychords[] = {
   { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_f}},                                        setlayout,        {.v = &layouts[1]} },
   { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_m}},                                        setlayout,        {.v = &layouts[2]} },
   { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_space}},                                    setlayout,        {0} },
-  { 3, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Shift_R}, {MOD_SHIFT, XKB_KEY_f}},          togglefloating,   {0} },
-  { 3, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Shift_R}, {MOD_SHIFT, XKB_KEY_f}},          togglefullscreen, {0} },
+  { 3, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Shift_R}, {MOD_SHIFT, XKB_KEY_F}},          togglefloating,   {0} },
+  { 3, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Shift_R}, {MOD_SHIFT, XKB_KEY_E}},          togglefullscreen, {0} },
   { 2, {{MODKEY, PREFIXKEY}, {MODKEY, XKB_KEY_0}},                                          view,             {.ui = ~0} },
   { 2, {{MODKEY, PREFIXKEY}, {MODKEY|MOD_SHIFT, XKB_KEY_parenright}},                       tag,              {.ui = ~0} },
   { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_comma}},                                    focusmon,         {.i = WLR_DIRECTION_LEFT} },
