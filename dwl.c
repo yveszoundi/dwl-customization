@@ -1412,18 +1412,15 @@ keybinding(uint32_t mods, xkb_keysym_t sym)
 	int done = 0;
 	const Keychord *k;
   
-	for (k = keychords; k < END(keychords); k++) {
-      if (k->n > currentkey) {
-          if (CLEANMASK(mods) == CLEANMASK(k->keys[currentkey].mod) &&
-                          sym == k->keys[currentkey].keysym) {
-              handled = 1;
+	for (k = keychords; k < END(keychords) && !handled; k++) {
+      if (k->n > currentkey && 
+          CLEANMASK(mods) == CLEANMASK(k->keys[currentkey].mod) &&
+          sym == k->keys[currentkey].keysym) {
+          handled = 1;
 
-              if (currentkey == k->n - 1 && k->func) {
-                  k->func(&k->arg);
-                  done = 1;
-              }
-
-              break;
+          if (currentkey == k->n - 1 && k->func) {
+              k->func(&k->arg);
+              done = 1;
           }
       }
 	}
