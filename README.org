@@ -14,12 +14,12 @@ The configuration is usable with a "modest" attempt to implement a [[https://www
 
 For the =autostart= patch, I apply changes from [[https://github.com/sevz17/dwl][sevz17/dwl]].
 
-|-----------+-----------------------------------------|
-| Patch     | Purpose                                 |
-|-----------+-----------------------------------------|
-| [[https://github.com/djpohly/dwl/wiki/autostart][autostart]] | Run programs on startup                 |
-| [[https://github.com/djpohly/dwl/wiki/keychord][keychord]]  | Implement =ratpoison= like keybindings= |
-|-----------+-----------------------------------------|
+|-----------+------------------------------------------|
+| Patch     | Purpose                                  |
+|-----------+------------------------------------------|
+| [[https://github.com/djpohly/dwl/wiki/autostart][autostart]] | Run programs on startup                  |
+| [[https://github.com/djpohly/dwl/wiki/keychord][keychord]]  | Implement =ratpoison= like =keybindings= |
+|-----------+------------------------------------------|
 
 * Keybindings
 
@@ -116,8 +116,6 @@ Set the =gtkgreet-run= wrapper as =greeter= command in =/etc/greetd/config.toml=
 *** xinit equivalent
 
 Create wrapper script at =/usr/local/bin/startw=.
-
-Once authentication is successful, the script will execute your =.wayland-session= startup script.
 
 #+begin_src sh
   #!/usr/bin/env sh
