@@ -55,7 +55,7 @@ In the commands to follow, I leverage [[https://en.wikipedia.org/wiki/Doas][doas
 I execute =gtkgreet= via [[https://github.com/Hjdskes/cage][cage]].
 
 #+begin_src sh
-  xbps-install -y cage greetd
+  doas xbps-install -y cage greetd
 #+end_src
 
 Compile =gtkgreet= from [[https://git.sr.ht/~kennylevinsen/gtkgreet][sources]] and place its binary at =/usr/local/bin/gtkgreet=.
@@ -68,7 +68,7 @@ Add the =greetd= system user to various groups (=_greeter= user on =Void Linux=)
 
 ** Display manager
 
-Create a wrapper script in =/usr/local/bin/gtkgreet-run=.
+Create a wrapper script at =/usr/local/bin/gtkgreet-run=.
 
 #+begin_src sh
   #!/usr/bin/env bash
@@ -87,7 +87,7 @@ Create a wrapper script in =/usr/local/bin/gtkgreet-run=.
   dbus-run-session cage -s -- gtkgreet
 #+end_src
 
-Ensure that the file is executable with =chmod +x /usr/local/bin/gtkgreet-run=.
+Ensure that the file is executable with =doas chmod +x /usr/local/bin/gtkgreet-run=.
 
 Set the =gtkgreet-run= wrapper as =greeter= command in =/etc/greetd/config.toml=.
 
@@ -124,7 +124,7 @@ Create wrapper script at =/usr/local/bin/startw=.
 
 #+end_src
 
-Ensure that the file is executable with =chmod +x /usr/local/bin/startw=.
+Ensure that the file is executable with =doas chmod +x /usr/local/bin/startw=.
 
 *** greetd registration
 
