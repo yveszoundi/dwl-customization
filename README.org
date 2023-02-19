@@ -14,20 +14,21 @@ The configuration is usable with a "modest" attempt to implement a [[https://www
 
 For the =autostart= patch, I apply changes from [[https://github.com/sevz17/dwl][sevz17/dwl]].
 
-|-----------+-------------------------------------------------+
-| Patch     | Purpose                                         |
-|-----------+-------------------------------------------------+
-| [[https://github.com/djpohly/dwl/wiki/autostart][autostart]] | Run programs on startup                         |
-| [[https://github.com/djpohly/dwl/wiki/keychord][keychord]]  | Implement =ratpoison= like keybindings =custom= |
-|-----------+-------------------------------------------------+
+|-----------+-----------------------------------------|
+| Patch     | Purpose                                 |
+|-----------+-----------------------------------------|
+| [[https://github.com/djpohly/dwl/wiki/autostart][autostart]] | Run programs on startup                 |
+| [[https://github.com/djpohly/dwl/wiki/keychord][keychord]]  | Implement =ratpoison= like keybindings= |
+|-----------+-----------------------------------------|
 
 * Keybindings
 
 Key bindings are defined in =config.def.h=.
 
-My initial idea was to leverage [[https://github.com/waycrate/swhkd][swhkd]]:
+My initial idea was to adopt [[https://github.com/waycrate/swhkd][swhkd]] as hotkey daemon:
 - That would require writing a reasonably complete IPC implementation for interacting with =dwl= externally.
 - I don't really like the fact that parts of =swhkd= need to run as root via =pkexec=, in comparison to [[https://github.com/baskerville/sxhkd][sxhkd]]
+- =swhkd= does have a concept of "modes" ("keymaps") which works well (tested with [[https://github.com/riverwm/river][river]] and =riverctl=)
 
 * How to run it
 
@@ -39,6 +40,113 @@ I'm currently using [[https://git.sr.ht/~raphi/somebar][somebar]] as status bar.
 
 * Screenshot
 
-A new [[https://www.qemu.org/][QEMU]] VM running Void Linux =x86_64-musl= ([[https://docs.voidlinux.org/installation/guides/fde.html][UEFI with full disk encryption]]).
+A new [[https://www.qemu.org/][QEMU]] VM running Void Linux.
 
 [[./screenshot.png]]
+
+* Optional setup for greetd
+
+I use [[https://sr.ht/~kennylevinsen/greetd/][greetd]] with its [[https://git.sr.ht/~kennylevinsen/gtkgreet][gtkgreet]] graphical frontend under =Void Linux=.
+
+In the commands to follow, I leverage [[https://en.wikipedia.org/wiki/Doas][doas]] instead of [[https://www.sudo.ws/][sudo]] (personal preference).
+
+** Install package dependencies
+
+I execute =gtkgreet= via [[https://github.com/Hjdskes/cage][cage]].
+
+#+begin_src sh
+  xbps-install -y cage greetd
+#+end_src
+
+Compile =gtkgreet= from [[https://git.sr.ht/~kennylevinsen/gtkgreet][sources]] and place its binary at =/usr/local/bin/gtkgreet=.
+
+Add the =greetd= system user to various groups (=_greeter= user on =Void Linux=).
+
+#+begin_src sh
+  doas usermod -a -G input,video,_seatd _greeter
+#+end_src
+
+** Display manager
+
+Create a wrapper script in =/usr/local/bin/gtkgreet-run=.
+
+#+begin_src sh
+  #!/usr/bin/env bash
+
+  export XDG_RUNTIME_DIR=/tmp/greeter
+  export XDG_SESSION_TYPE=wayland
+  export XDG_CURRENT_DESKTOP=cage
+  export XDG_SESSION_DESKTOP=cage
+  export WLR_LIBINPUT_NO_DEVICES=1
+  export GDK_BACKEND=wayland
+  export WLR_NO_HARDWARE_CURSORS=1
+  export WLR_RENDERER_ALLOW_SOFTWARE=0
+
+  mkdir -p $XDG_RUNTIME_DIR
+
+  dbus-run-session cage -s -- gtkgreet
+#+end_src
+
+Ensure that the file is executable with =chmod +x /usr/local/bin/gtkgreet-run=.
+
+Set the =gtkgreet-run= wrapper as =greeter= command in =/etc/greetd/config.toml=.
+
+#+begin_src conf-toml
+  [terminal]
+  # The VT to run the greeter on. Can be "next", "current" or a number
+  # designating the VT.
+  vt = 7
+
+  # The default session, also known as the greeter.
+  [default_session]
+
+  # `agreety` is the bundled agetty/login-lookalike. You can replace `/bin/sh`
+  # with whatever you want started, such as `sway`.
+  # command = "agreety --cmd /bin/sh"
+  command = "/usr/local/bin/gtkgreet-run"
+
+  # The user to run the command as. The privileges this user must have depends
+  # on the greeter. A graphical greeter may for example require the user to be
+  # in the `video` group.
+  user = "_greeter"
+#+end_src
+
+** Wrapper for launching wayland sessions
+
+*** xinit equivalent
+
+Create wrapper script at =/usr/local/bin/startw=.
+
+Once authentication is successful, the script will execute your =.wayland-session= startup script.
+
+#+begin_src sh
+  #!/usr/bin/env sh
+
+  $SHELL -l -c "$HOME/.wayland-session"
+
+#+end_src
+
+Ensure that the file is executable with =chmod +x /usr/local/bin/startw=.
+
+*** greetd registration
+
+#+begin_src sh
+  echo "startw" | doas tee -a /etc/greetd/environments
+#+end_src
+
+*** xinitrc equivalent
+
+Note: I use =ksh= as login shell, adapt as needed.
+
+Here are the contents of my =$HOME/.wayland-session= file.
+
+#+begin_src sh
+  #!/usr/bin/env ksh
+
+  . $HOME/.profile
+  . $HOME/.config/shell/kshrc
+
+  exec dbus-run-session dwl -s somebar
+#+end_src
+
+Ensure that the file is executable with =chmod +x ~/.wayland-session=.
