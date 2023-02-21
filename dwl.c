@@ -197,6 +197,7 @@ struct Monitor {
 	unsigned int tagset[2];
 	double mfact;
 	int nmaster;
+	char ltsymbol[16];
 };
 
 typedef struct {
@@ -495,7 +496,9 @@ arrange(Monitor *m)
 
 	wlr_scene_node_set_enabled(&m->fullscreen_bg->node,
 			(c = focustop(m)) && c->isfullscreen);
-
+ 
+	if (m)
+		strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof m->ltsymbol);
 	if (m && m->lt[m->sellt]->arrange)
 		m->lt[m->sellt]->arrange(m);
 	motionnotify(0);
@@ -1005,6 +1008,7 @@ createmon(struct wl_listener *listener, void *data)
 		wlr_output_layout_add_auto(output_layout, wlr_output);
 	else
 		wlr_output_layout_add(output_layout, wlr_output, m->m.x, m->m.y);
+	strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof m->ltsymbol);
 }
 
 void
@@ -1644,6 +1648,9 @@ void
 monocle(Monitor *m)
 {
 	Client *c;
+	int n = wl_list_length(&clients);
+	if (n != 0)
+		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
 
 	wl_list_for_each(c, &clients, link) {
 		if (!VISIBLEON(c, m) || c->isfloating || c->isfullscreen)
@@ -1903,7 +1910,7 @@ printstatus(void)
 		printf("%s selmon %u\n", m->wlr_output->name, m == selmon);
 		printf("%s tags %u %u %u %u\n", m->wlr_output->name, occ, m->tagset[m->seltags],
 				sel, urg);
-		printf("%s layout %s\n", m->wlr_output->name, m->lt[m->sellt]->symbol);
+		printf("%s layout %s\n", m->wlr_output->name, m->ltsymbol);
 	}
 	fflush(stdout);
 }
@@ -2114,7 +2121,7 @@ setlayout(const Arg *arg)
 		selmon->sellt ^= 1;
 	if (arg && arg->v)
 		selmon->lt[selmon->sellt] = (Layout *)arg->v;
-	/* TODO change layout symbol? */
+	strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof selmon->ltsymbol);
 	arrange(selmon);
 	printstatus();
 }
