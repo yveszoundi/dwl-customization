@@ -120,7 +120,7 @@ static const Keychord keychords[] = {
   /* Note that Shift changes certain key codes: c -> C, 2 -> at, etc. */
   /* count key_sequences                                                                    function          argument */
   { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Return}},                                   spawn,            RUN("bemenu-run", "-l", "10") },
-  { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_c}},                                        spawn,            RUN("alacritty") },
+  { 2, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_c}},                                        spawn,            RUN("foot") },
   { 2, {{MODKEY, PREFIXKEY}, {MODKEY,   XKB_KEY_l}},                                        spawn,            RUN("swaylock") },
   { 3, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Shift_R}, {MOD_SHIFT, XKB_KEY_C}},          spawn,            RUN("rclip-copy") },
   { 3, {{MODKEY, PREFIXKEY}, {MOD_NONE, XKB_KEY_Shift_R}, {MOD_SHIFT, XKB_KEY_V}},          spawn,            RUN("rclip-paste") },  

@@ -14,12 +14,13 @@ The configuration is usable with a "modest" attempt to implement a [[https://www
 
 For the =autostart= patch, I apply changes from [[https://github.com/sevz17/dwl][sevz17/dwl]].
 
-|-----------+------------------------------------------|
-| Patch     | Purpose                                  |
-|-----------+------------------------------------------|
-| [[https://github.com/djpohly/dwl/wiki/autostart][autostart]] | Run programs on startup                  |
-| [[https://github.com/djpohly/dwl/wiki/keychord][keychord]]  | Implement =ratpoison= like =keybindings= |
-|-----------+------------------------------------------|
+|-------------+------------------------------------------|
+| Patch       | Purpose                                  |
+|-------------+------------------------------------------|
+| [[https://github.com/djpohly/dwl/wiki/autostart][autostart]]   | Run programs on startup                  |
+| [[https://github.com/djpohly/dwl/wiki/keychord][keychord]]    | Implement =ratpoison= like =keybindings= |
+| [[https://lists.sr.ht/~raphi/public-inbox/%3C20230220103619.95729-1-palanixyt%40gmail.com%3E][wayland-ipc]] | IPC patch for status bar interactions    |
+|-------------+------------------------------------------|
 
 * Keybindings
 
@@ -35,8 +36,14 @@ My initial idea was to adopt [[https://github.com/waycrate/swhkd][swhkd]] as hot
 I'm currently using [[https://github.com/kolunmi/dwlb][dwlb]] as status bar.
 
 #+begin_src sh
-  dbus-run-session dwl -s dwlb
+  dbus-run-session dwl -s "dwlb -ipc"
 #+end_src
+
+Programs invoked by my configuration include:
+- [[https://github.com/yveszoundi/rclip][rclip]]: clipboard sharing between a host and virtual machines (patched for wayland)
+- [[https://codeberg.org/dnkl/foot][foot]]: terminal emulator
+- [[https://github.com/swaywm/swaylock][swaylock]]: screen lock tool
+- [[https://github.com/Cloudef/bemenu][bemenu]]: applications launcher menu
 
 * Screenshot
 
@@ -144,7 +151,7 @@ Here are the contents of my =$HOME/.wayland-session= file.
   . $HOME/.profile
   . $HOME/.config/shell/kshrc
 
-  exec dbus-run-session dwl -s dwlb
+  exec dbus-run-session dwl -s "dwlb -ipc"
 #+end_src
 
 Ensure that the file is executable with =chmod +x ~/.wayland-session=.
