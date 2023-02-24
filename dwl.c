@@ -205,6 +205,7 @@ struct Monitor {
 	unsigned int tagset[2];
 	double mfact;
 	int nmaster;
+	char ltsymbol[16];
 };
 
 typedef struct {
@@ -507,7 +508,9 @@ arrange(Monitor *m)
 
 	wlr_scene_node_set_enabled(&m->fullscreen_bg->node,
 			(c = focustop(m)) && c->isfullscreen);
- 
+
+  if (m)
+		strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof m->ltsymbol);
 	if (m && m->lt[m->sellt]->arrange)
 		m->lt[m->sellt]->arrange(m);
 	motionnotify(0);
@@ -1023,6 +1026,8 @@ createmon(struct wl_listener *listener, void *data)
 		wlr_output_layout_add_auto(output_layout, wlr_output);
 	else
 		wlr_output_layout_add(output_layout, wlr_output, m->m.x, m->m.y);
+
+  strncpy(m->ltsymbol, m->lt[m->sellt]->symbol, sizeof m->ltsymbol);
 }
 
 void
@@ -1662,12 +1667,16 @@ void
 monocle(Monitor *m)
 {
 	Client *c;
+	int n = 0;
 
 	wl_list_for_each(c, &clients, link) {
 		if (!VISIBLEON(c, m) || c->isfloating || c->isfullscreen)
 			continue;
 		resize(c, m->w, 0);
+    n++;
 	}
+	if (n != 0)
+		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
 	if ((c = focustop(m)))
 		wlr_scene_node_raise_to_top(&c->scene->node);
 }
@@ -1921,7 +1930,7 @@ printstatus(void)
 		printf("%s selmon %u\n", m->wlr_output->name, m == selmon);
 		printf("%s tags %u %u %u %u\n", m->wlr_output->name, occ, m->tagset[m->seltags],
 				sel, urg);
-		printf("%s layout %s\n", m->wlr_output->name, m->lt[m->sellt]->symbol);
+		printf("%s layout %s\n", m->wlr_output->name, m->ltsymbol);
 		dwl_wm_printstatus(m);
 	}
 	fflush(stdout);
@@ -2133,7 +2142,7 @@ setlayout(const Arg *arg)
 		selmon->sellt ^= 1;
 	if (arg && arg->v)
 		selmon->lt[selmon->sellt] = (Layout *)arg->v;
-	/* TODO change layout symbol? */
+	strncpy(selmon->ltsymbol, selmon->lt[selmon->sellt]->symbol, sizeof selmon->ltsymbol);
 	arrange(selmon);
 	printstatus();
 }
@@ -2983,6 +2992,7 @@ dwl_wm_printstatus_to(Monitor *m, const DwlWmMonitor *mon)
 			tag, state, numclients, focused_client);
 	}
 	znet_tapesoftware_dwl_wm_monitor_v1_send_layout(mon->resource, m->lt[m->sellt] - layouts);
+	znet_tapesoftware_dwl_wm_monitor_v1_send_ltsymbol(mon->resource, m->ltsymbol);
 	znet_tapesoftware_dwl_wm_monitor_v1_send_title(mon->resource,
 		focused ? client_get_title(focused) : "");
 	znet_tapesoftware_dwl_wm_monitor_v1_send_frame(mon->resource);

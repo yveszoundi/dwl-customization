@@ -121,6 +121,13 @@
             <arg name="layout" type="uint" summary="index of a layout received by the dwl_wm_v1.layout event."/>
         </event>
 
+        <event name="ltsymbol">
+            <description summary="The layout symbol">
+                Announces the update of the layout symbol.
+            </description>
+            <arg name="ltsymbol" type="string"/>
+        </event>
+        
         <event name="title">
             <description summary="updates the focused client">
                 Announces the update of the selected client.
